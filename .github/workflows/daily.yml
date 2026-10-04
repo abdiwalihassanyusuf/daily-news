@@ -1,0 +1,35 @@
+name: Daily news
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install feedparser
+
+      - name: Build the digest
+        run: |
+          python daily_news.py
+          cp "news_$(date +%F).html" index.html
+
+      - name: Save the result
+        run: |
+          git config user.name "news-bot"
+          git config user.email "news-bot@users.noreply.github.com"
+          git add index.html
+          git commit -m "Daily news" || echo "No changes"
+          git push
